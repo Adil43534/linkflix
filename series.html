@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linkflix - Series</title>
+    <style>
+        /* CSS Variables for Theming - Consistent across all pages */
+        :root {
+            --background-color: #141414;
+            --text-color: #fff;
+            --header-bg: rgba(20, 20, 20, 0.6);
+            --card-bg: #333;
+            --overlay-bg: rgba(0, 0, 0, 0.7);
+            --footer-bg: #000;
+            --scrollbar-thumb: #e50914;
+            --search-bg: rgba(34, 34, 34, 0.4);
+            --search-text: #fff;
+            --search-border: rgba(255, 255, 255, 0.3);
+            --search-focus: #e50914;
+            --modal-bg: rgba(0, 0, 0, 0.8);
+            --modal-content-bg: #1e1e1e;
+        }
+
+        [data-theme="light"] {
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --card-bg: #e0e0e0;
+            --overlay-bg: rgba(255, 255, 255, 0.8);
+            --footer-bg: #222;
+            --scrollbar-thumb: #b20710;
+            --search-bg: rgba(255, 255, 255, 0.4);
+            --search-text: #333;
+            --search-border: rgba(0, 0, 0, 0.2);
+            --search-focus: #b20710;
+            --modal-bg: rgba(255, 255, 255, 0.8);
+            --modal-content-bg: #fefefe;
+        }
+
+        /* Base Styles - Consistent across all pages */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+            padding-top: 80px; /* Offset for fixed header */
+        }
+
+        /* Scrollbar Styles - Consistent across all pages */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+        body::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+
+        /* Header Styles (Glass Effect) - Consistent across all pages */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--header-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-weight: bold;
+            color: #e50914;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease-in-out;
+        }
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            position: relative;
+            padding: 0.2rem 0;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #e50914;
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Search Bar (Glass Effect) - Consistent across all pages */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: var(--search-bg);
+            border-radius: 25px;
+            padding: 0.3rem 0.5rem;
+            border: 1px solid var(--search-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .search-bar:hover,
+        .search-bar:focus-within {
+            border-color: var(--search-focus);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+        }
+
+        .search-bar input {
+            background: transparent;
+            color: var(--search-text);
+            border: none;
+            padding: 0.6rem 1rem;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            width: clamp(120px, 25vw, 180px);
+            outline: none;
+            transition: width 0.3s ease, padding 0.3s ease;
+        }
+
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        [data-theme="light"] .search-bar input::placeholder {
+            color: rgba(51, 51, 51, 0.7);
+        }
+
+        .search-bar input:focus {
+            width: clamp(150px, 35vw, 250px);
+            padding-left: 1.2rem;
+            padding-right: 1.2rem;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, border-color 0.3s, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .theme-toggle:hover {
+            background: #e50914;
+            color: #fff;
+            border-color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            cursor: pointer;
+            z-index: 1001;
+            transition: transform 0.3s ease;
+        }
+        .hamburger:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Navigation Overlay - Consistent across all pages */
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+                flex-direction: column;
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 70%;
+                height: 100vh;
+                background: var(--header-bg);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 6rem 2rem 2rem;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+                transition: transform 0.3s ease-in-out;
+                transform: translateX(100%);
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            nav.active {
+                transform: translateX(0);
+                display: flex;
+            }
+
+            nav a, .search-bar, .theme-toggle {
+                width: 100%;
+                margin: 0;
+                text-align: left;
+                padding: 0.8rem 0;
+            }
+            nav a::after { left: 0; }
+
+            .search-bar input {
+                width: 100%;
+                padding: 0.8rem 1rem;
+            }
+            .search-bar input:focus {
+                width: 100%;
+            }
+
+            .hamburger {
+                display: block;
+            }
+        }
+
+        /* Main Content Styles for Series Page (reusing .movies-page-content class for consistency) */
+        .series-page-content {
+            padding: clamp(2rem, 8vw, 4rem) 5%;
+        }
+
+        .series-page-content h2 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin-bottom: 2rem;
+            text-align: center;
+            color: #e50914;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Series Grid Styles - Identical to Movie Grid for consistency */
+        .series-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        /* Series Card Styles - Reusing card styling from movies page */
+        .series-card {
+            flex: 0 0 auto;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 2/3; /* Common poster aspect ratio */
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .series-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .series-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .series-card .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, var(--overlay-bg) 0%, rgba(0,0,0,0) 100%);
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 50%;
+        }
+
+        .series-card:hover .overlay {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .series-card .overlay h3 {
+            font-size: clamp(1rem, 2.2vw, 1.2rem);
+            margin-bottom: 0.4rem;
+            color: var(--text-color);
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+
+        .series-card .overlay p {
+            font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+            color: #bbb;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+
+        /* Footer - Consistent across all pages */
+        footer {
+            background: var(--footer-bg);
+            padding: clamp(1rem, 4vw, 2rem) 5%;
+            text-align: center;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            color: #aaa;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 2rem;
+            border-radius: 15px 15px 0 0;
+        }
+
+        /* Custom Modal Styles - Consistent across all pages */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--modal-content-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .modal-close-button:hover {
+            color: #e50914;
+        }
+
+        .modal-content h3 {
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            margin-bottom: 1rem;
+            color: #e50914;
+        }
+
+        .modal-content p {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Media Queries for Series Grid Responsiveness - Identical to Movie Grid */
+        @media (min-width: 576px) {
+            .series-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
+        }
+
+        @media (min-width: 768px) {
+            .series-grid {
+                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            }
+        }
+
+        @media (min-width: 992px) {
+            .series-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .series-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- HEADER - Consistent across all pages -->
+    <header>
+        <div class="logo">Linkflix</div>
+        <button class="hamburger" aria-label="Toggle navigation" onclick="toggleNav()">&#9776;</button>
+        <nav id="mainNav">
+            <a href="home.html" onclick="closeNav()">Home</a>
+            <a href="movies.html" onclick="closeNav()">Movies</a>
+            <a href="series.html" onclick="closeNav()">Series</a>
+            <a href="account.html" onclick="closeNav()">Account</a>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search movies or series..." onkeydown="if(event.key === 'Enter') searchContent()">
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">Dark</button>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT FOR SERIES PAGE -->
+    <main class="series-page-content">
+        <h2>Explore All Series</h2>
+
+        <div class="series-grid">
+            <!-- Example Series Cards -->
+            <div class="series-card" onclick="window.location.href='series-detail.html'">
+                <img src="https://placehold.co/300x450/1E90FF/FFFFFF?text=The+Crimson+Blade" alt="The Crimson Blade">
+                <div class="overlay">
+                    <h3>The Crimson Blade</h3>
+                    <p>3 Seasons | Fantasy, Action</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_2')">
+                <img src="https://placehold.co/300x450/FF6347/FFFFFF?text=Detective+Files" alt="Detective Files">
+                <div class="overlay">
+                    <h3>Detective Files</h3>
+                    <p>5 Seasons | Crime, Drama</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_3')">
+                <img src="https://placehold.co/300x450/32CD32/FFFFFF?text=Comedy+Central+Live" alt="Comedy Central Live">
+                <div class="overlay">
+                    <h3>The Hilarious House</h3>
+                    <p>4 Seasons | Comedy</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_4')">
+                <img src="https://placehold.co/300x450/8A2BE2/FFFFFF?text=Space+Odyssey" alt="Space Odyssey">
+                <div class="overlay">
+                    <h3>Stellar Frontier</h3>
+                    <p>2 Seasons | Sci-Fi, Adventure</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_5')">
+                <img src="https://placehold.co/300x450/FFD700/000000?text=Ancient+Empires" alt="Ancient Empires">
+                <div class="overlay">
+                    <h3>Echoes of History</h3>
+                    <p>1 Season | Historical, Docu</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_6')">
+                <img src="https://placehold.co/300x450/FF4500/FFFFFF?text=Medical+Drama" alt="Medical Drama">
+                <div class="overlay">
+                    <h3>Life & Death Ward</h3>
+                    <p>6 Seasons | Drama, Medical</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_7')">
+                <img src="https://placehold.co/300x450/4B0082/FFFFFF?text=Horror+Anthology" alt="Horror Anthology">
+                <div class="overlay">
+                    <h3>Tales from the Crypt</h3>
+                    <p>3 Seasons | Horror, Anthology</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_8')">
+                <img src="https://placehold.co/300x450/20B2AA/FFFFFF?text=Family+Adventures" alt="Family Adventures">
+                <div class="overlay">
+                    <h3>The Greenway Family</h3>
+                    <p>4 Seasons | Family, Comedy</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_9')">
+                <img src="https://placehold.co/300x450/DEB887/000000?text=Post+Apocalyptic" alt="Post Apocalyptic">
+                <div class="overlay">
+                    <h3>The Last Outpost</h3>
+                    <p>2 Seasons | Drama, Sci-Fi</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_10')">
+                <img src="https://placehold.co/300x450/CD5C5C/FFFFFF?text=Teen+Drama" alt="Teen Drama">
+                <div class="overlay">
+                    <h3>High School Chronicles</h3>
+                    <p>5 Seasons | Drama, Teen</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_11')">
+                <img src="https://placehold.co/300x450/6A5ACD/FFFFFF?text=True+Crime+Docu" alt="True Crime Docu">
+                <div class="overlay">
+                    <h3>Unsolved Files</h3>
+                    <p>3 Seasons | Documentary, Crime</p>
+                </div>
+            </div>
+            <div class="series-card" onclick="streamContent('https://drive.google.com/drive/folders/SERIES_ID_12')">
+                <img src="https://placehold.co/300x450/4682B4/FFFFFF?text=Supernatural+Thriller" alt="Supernatural Thriller">
+                <div class="overlay">
+                    <h3>The Veil Between</h3>
+                    <p>2 Seasons | Supernatural, Thriller</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER - Consistent across all pages -->
+    <footer>
+        <p>&copy; 2025 Linkflix. All rights reserved. Designed for optimal streaming via Google Drive.</p>
+    </footer>
+
+    <!-- Custom Modal Structure - Consistent across all pages -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" onclick="hideModal()">&times;</button>
+            <h3 id="modalTitle"></h3>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+    <!-- JS - Consistent across all pages (excluding slider specific logic) -->
+    <script>
+        // Theme Toggling
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'light' ? 'Dark' : 'Light';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Apply saved theme on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-toggle').textContent = savedTheme === 'light' ? 'Dark' : 'Light';
+        });
+
+        // Hamburger Navigation for Mobile
+        function toggleNav() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            nav.classList.toggle('active');
+            hamburger.innerHTML = nav.classList.contains('active') ? '&times;' : '&#9776;'; // Change icon
+        }
+
+        function closeNav() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            if (nav.classList.contains('active')) {
+                nav.classList.remove('active');
+                hamburger.innerHTML = '&#9776;';
+            }
+        }
+
+        // Custom Modal Functions
+        function showModal(title, message) {
+            const modalOverlay = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalOverlay.classList.add('active');
+        }
+
+        function hideModal() {
+            const modalOverlay = document.getElementById('customModal');
+            modalOverlay.classList.remove('active');
+        }
+
+        // Search Content Function (uses custom modal)
+        function searchContent() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                showModal('Search Initiated', `Searching for "${query}"... Please note: This is a demo; actual search functionality would integrate with a backend.`);
+            } else {
+                showModal('Search Empty', 'Please enter a search term to begin your search.');
+            }
+        }
+
+        // Stream Content Function (opens new tab)
+        function streamContent(link) {
+            showModal('Streaming Content', 'Opening content in a new tab... Enjoy!');
+            setTimeout(() => {
+                window.open(link, '_blank');
+                hideModal();
+            }, 1500);
+        }
+
+        // Listen for clicks outside the mobile nav to close it
+        document.addEventListener('click', (event) => {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            if (nav.classList.contains('active') && !nav.contains(event.target) && !hamburger.contains(event.target)) {
+                closeNav();
+            }
+        });
+
+        // Prevent body scroll when modal is active
+        document.getElementById('customModal').addEventListener('transitionend', function() {
+            if (this.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+</body>
+</html>

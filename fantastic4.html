@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linkflix - Fantastic Four: First Steps</title>
+    <style>
+        /* CSS Variables for Theming - Consistent across all pages */
+        :root {
+            --background-color: #141414;
+            --text-color: #fff;
+            --header-bg: rgba(20, 20, 20, 0.6);
+            --card-bg: #333;
+            --overlay-bg: rgba(0, 0, 0, 0.7);
+            --footer-bg: #000;
+            --scrollbar-thumb: #e50914;
+            --search-bg: rgba(34, 34, 34, 0.4);
+            --search-text: #fff;
+            --search-border: rgba(255, 255, 255, 0.3);
+            --search-focus: #e50914;
+            --modal-bg: rgba(0, 0, 0, 0.8);
+            --modal-content-bg: #1e1e1e;
+            --button-primary: #e50914;
+            --movie-detail-hero-overlay: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.8) 100%); /* New variable for hero overlay */
+            --movie-content-container-bg: rgba(0,0,0,0.3); /* New variable for content container background */
+            --meta-info-bg: rgba(255,255,255,0.05); /* New variable for meta info background */
+        }
+
+        [data-theme="light"] {
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --card-bg: #e0e0e0;
+            --overlay-bg: rgba(255, 255, 255, 0.8);
+            --footer-bg: #222;
+            --scrollbar-thumb: #b20710;
+            --search-bg: rgba(255, 255, 255, 0.4);
+            --search-text: #333;
+            --search-border: rgba(0, 0, 0, 0.2);
+            --search-focus: #b20710;
+            --modal-bg: rgba(255, 255, 255, 0.8);
+            --modal-content-bg: #fefefe;
+            --button-primary: #b20710;
+            --movie-detail-hero-overlay: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.8) 100%); /* Light mode overlay */
+            --movie-content-container-bg: rgba(255,255,255,0.7); /* Light mode content container background */
+            --meta-info-bg: rgba(0,0,0,0.05); /* Light mode meta info background */
+        }
+
+        /* Base Styles - Consistent across all pages */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+            padding-top: 80px; /* Offset for fixed header */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbar Styles - Consistent across all pages */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+        body::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+
+        /* Header Styles (Glass Effect) - Consistent across all pages */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--header-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-weight: bold;
+            color: #e50914;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease-in-out;
+        }
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            position: relative;
+            padding: 0.2rem 0;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #e50914;
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Search Bar (Glass Effect) - Consistent across all pages */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: var(--search-bg);
+            border-radius: 25px;
+            padding: 0.3rem 0.5rem;
+            border: 1px solid var(--search-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .search-bar:hover,
+        .search-bar:focus-within {
+            border-color: var(--search-focus);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+        }
+
+        .search-bar input {
+            background: transparent;
+            color: var(--search-text);
+            border: none;
+            padding: 0.6rem 1rem;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            width: clamp(120px, 25vw, 180px);
+            outline: none;
+            transition: width 0.3s ease, padding 0.3s ease;
+        }
+
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        [data-theme="light"] .search-bar input::placeholder {
+            color: rgba(51, 51, 51, 0.7);
+        }
+
+        .search-bar input:focus {
+            width: clamp(150px, 35vw, 250px);
+            padding-left: 1.2rem;
+            padding-right: 1.2rem;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, border-color 0.3s, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .theme-toggle:hover {
+            background: #e50914;
+            color: #fff;
+            border-color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            cursor: pointer;
+            z-index: 1001;
+            transition: transform 0.3s ease;
+        }
+        .hamburger:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Navigation Overlay - Consistent across all pages */
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+                flex-direction: column;
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 70%;
+                height: 100vh;
+                background: var(--header-bg);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 6rem 2rem 2rem;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+                transition: transform 0.3s ease-in-out;
+                transform: translateX(100%);
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            nav.active {
+                transform: translateX(0);
+                display: flex;
+            }
+
+            nav a, .search-bar, .theme-toggle {
+                width: 100%;
+                margin: 0;
+                text-align: left;
+                padding: 0.8rem 0;
+            }
+            nav a::after { left: 0; }
+
+            .search-bar input {
+                width: 100%;
+                padding: 0.8rem 1rem;
+            }
+            .search-bar input:focus {
+                width: 100%;
+            }
+
+            .hamburger {
+                display: block;
+            }
+        }
+
+        /* Movie Detail Page Specific Styles */
+        .movie-detail-hero {
+            position: relative;
+            width: 100%;
+            min-height: 85vh; /* Increased height for a grander feel */
+            background-image: url('/movie posters/fantastic4-banner.jpg'); /* More generic, epic feel */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-color); /* Use text color variable */
+            overflow: hidden;
+            padding-top: 80px; /* Ensure content starts below the header */
+            padding-bottom: 2rem; /* Add some padding at the bottom for content below */
+        }
+
+        .movie-detail-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--movie-detail-hero-overlay); /* Use new variable */
+            backdrop-filter: blur(8px); /* More pronounced blur */
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 0;
+        }
+
+        .movie-content-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column; /* Stack vertically on small screens */
+            align-items: center;
+            max-width: 1400px; /* Wider content area */
+            margin: 0 auto;
+            padding: clamp(1.5rem, 5vw, 3rem); /* Increased padding */
+            gap: 2.5rem; /* More space between poster and text */
+            background: var(--movie-content-container-bg); /* Use new variable */
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5); /* Stronger shadow */
+        }
+
+        .movie-poster {
+            width: clamp(250px, 35vw, 350px); /* Larger, more prominent poster */
+            height: auto;
+            aspect-ratio: 2/3;
+            border-radius: 15px; /* More rounded */
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6); /* Even stronger shadow */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 3px solid rgba(229, 9, 20, 0.7); /* Subtle red border */
+        }
+
+        .movie-poster:hover {
+            transform: scale(1.03) translateY(-5px); /* Lift and grow slightly more */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        }
+
+        .movie-details-text {
+            text-align: center;
+            max-width: 800px; /* Wider text content */
+            color: var(--text-color); /* Ensure text color uses variable */
+        }
+
+        .movie-details-text h1 {
+            font-size: clamp(3rem, 7vw, 5rem); /* Larger, more impactful title */
+            margin-bottom: 1.2rem;
+            color: #e50914; /* Linkflix red for the title */
+            text-shadow: 3px 3px 8px rgba(0,0,0,0.9); /* More pronounced shadow */
+            font-weight: 700; /* Bolder font */
+        }
+
+        [data-theme="light"] .movie-details-text h1 {
+             text-shadow: 3px 3px 8px rgba(0,0,0,0.4); /* Lighter shadow for light mode */
+        }
+
+        .movie-details-text .tagline {
+            font-size: clamp(1.1rem, 3vw, 1.8rem); /* New tagline style */
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            color: var(--text-color); /* Use text color variable */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+        }
+
+        [data-theme="light"] .movie-details-text .tagline {
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3); /* Lighter shadow for light mode */
+        }
+
+        .movie-details-text .synopsis {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            margin-bottom: 1.8rem;
+            color: var(--text-color); /* Use text color variable */
+            text-align: justify; /* Justify text for a cleaner block */
+        }
+
+        .movie-details-text .meta-info {
+            font-size: clamp(0.9rem, 2.2vw, 1.1rem);
+            color: var(--text-color); /* Use text color variable */
+            margin-top: 1.5rem;
+            line-height: 1.8;
+            background: var(--meta-info-bg); /* Use new variable */
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            display: inline-block; /* Helps with centering if content is small */
+            text-align: left; /* Ensure text is left-aligned within its block */
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        }
+        [data-theme="light"] .movie-details-text .meta-info {
+             box-shadow: inset 0 0 5px rgba(0,0,0,0.1); /* Lighter shadow for light mode */
+        }
+
+        .movie-details-text .meta-info p strong {
+            color: var(--button-primary); /* Highlight strong tags with primary button color */
+        }
+
+
+        /* Styles for the "Play Movie" button */
+        .play-button {
+            background: var(--button-primary);
+            color: #fff;
+            padding: 1.2rem 2.5rem; /* Larger button */
+            border: none;
+            border-radius: 10px; /* More rounded */
+            font-size: clamp(1.1rem, 3vw, 1.5rem); /* Larger font */
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.4); /* Stronger button shadow */
+            margin-top: 3rem; /* More space above button */
+            text-transform: uppercase; /* Uppercase text */
+            font-weight: bold;
+        }
+
+        .play-button:hover {
+            background: #b20710;
+            transform: translateY(-5px) scale(1.02); /* More pronounced hover effect */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+        .play-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Styles for button group */
+        .button-group {
+            display: flex;
+            gap: 1.5rem; /* Space between buttons */
+            margin-top: 3rem; /* Same top margin as the single button had */
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            justify-content: center; /* Center buttons when they wrap */
+        }
+
+        .trailer-button {
+            background: #444; /* Different color for trailer button */
+            color: #fff;
+            padding: 1.2rem 2.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(1.1rem, 3vw, 1.5rem);
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .trailer-button:hover {
+            background: #666; /* Darker hover effect */
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+        .trailer-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Custom Video Modal Styles */
+        .video-modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: blur(10px); /* Stronger blur */
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1003; /* Higher than customModal */
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .video-modal-content {
+            position: relative;
+            max-width: 90%;
+            width: 800px; /* Max width for the video container */
+            background: var(--modal-content-bg); /* Use modal content background for a consistent look */
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); /* Stronger shadow */
+            transform: scale(0.9);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            padding: 1rem; /* Padding around the video iframe */
+        }
+
+        .video-modal-overlay.active .video-modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .video-modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #fff; /* White close button for contrast */
+            font-size: 2rem; /* Larger close button */
+            cursor: pointer;
+            z-index: 10; /* Ensure it's above the iframe */
+            transition: color 0.3s ease;
+        }
+        .video-modal-close-button:hover {
+            color: var(--button-primary); /* Red hover effect */
+        }
+
+        /* Responsive video container for iframe inside modal */
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px; /* Slightly less rounded than modal content */
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none; /* No border for the iframe */
+        }
+
+
+        /* Footer - Consistent across all pages */
+        footer {
+            background: var(--footer-bg);
+            padding: clamp(1rem, 4vw, 2rem) 5%;
+            text-align: center;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            color: #aaa;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: auto;
+            border-radius: 15px 15px 0 0;
+        }
+
+        /* Custom Modal Styles (general purpose, existing) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--modal-content-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .modal-close-button:hover {
+            color: var(--button-primary);
+        }
+
+        .modal-content h3 {
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            margin-bottom: 1rem;
+            color: var(--button-primary); /* Use primary button color for modal title */
+        }
+
+        .modal-content p {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            margin-bottom: 1.5rem;
+            color: var(--text-color); /* Ensure modal message uses text color variable */
+        }
+
+        /* --- Carousel specific styles (copied from movies.html for suggested section) --- */
+        .category-section {
+            margin-bottom: 3rem;
+            padding: 2rem 5%; /* Add padding to the section */
+        }
+
+        .category-section h2 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            border-bottom: 2px solid var(--scrollbar-thumb);
+            padding-bottom: 0.5rem;
+            display: inline-block; /* Makes border-bottom fit content */
+        }
+
+        .carousel-container {
+            display: flex;
+            overflow-x: auto; /* Enable horizontal scrolling */
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            padding-bottom: 1.5rem; /* Space for scrollbar */
+            gap: 1.2rem; /* Space between items */
+            border-radius: 15px; /* Rounded corners for the container */
+        }
+
+        /* Custom Scrollbar for Carousel */
+        .carousel-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .carousel-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        .carousel-container::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+
+        .carousel-item {
+            flex: 0 0 auto; /* Prevent items from shrinking */
+            width: clamp(150px, 20vw, 220px); /* Responsive item width */
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            cursor: pointer; /* Indicate clickability */
+        }
+
+        .carousel-item:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 2/3; /* Maintain aspect ratio for posters */
+            display: block;
+            object-fit: cover;
+        }
+
+        .carousel-item .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+            padding: 1rem;
+            color: #fff;
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.3s ease;
+            text-align: left;
+        }
+
+        .carousel-item:hover .overlay {
+            opacity: 1; /* Visible on hover */
+        }
+
+        .carousel-item .overlay h3 {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .carousel-item .overlay p {
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            color: #ccc;
+        }
+
+        /* Adjustments for light mode in carousel section */
+        [data-theme="light"] .category-section h2 {
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        [data-theme="light"] .carousel-item {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] .carousel-item:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        [data-theme="light"] .carousel-item .overlay {
+            background: linear-gradient(to top, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+            color: var(--text-color);
+        }
+        [data-theme="light"] .carousel-item .overlay p {
+            color: var(--text-color);
+        }
+    </style>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- HEADER - Consistent across all pages -->
+    <header>
+        <div class="logo">Linkflix</div>
+        <button class="hamburger" aria-label="Toggle navigation" onclick="toggleNav()">&#9776;</button>
+        <nav id="mainNav">
+            <a href="/home.html" onclick="closeNav()">Home</a>
+            <a href="/movies.html" onclick="closeNav()">Movies</a>
+            <a href="/series.html" onclick="closeNav()">Series</a>
+            <a href="/request.html" onclick="closeNav()">Request</a>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search movies or series..." onkeydown="if(event.key === 'Enter') searchContent()">
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">Dark</button>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT FOR MOVIE DETAIL PAGE -->
+    <main class="movie-detail-hero">
+        <div class="movie-content-container">
+            <img src="/movie posters/fantastic4.jpg" alt="Fantastic Four: First Steps" class="movie-poster">
+            <div class="movie-details-text">
+                <h1>Fantastic Four: First Steps</h1>
+                <p class="tagline">The world needs a hero. He will rise.</p>
+                <p class="synopsis">
+                    Clark Kent, a young reporter, discovers his extraordinary powers and heritage. As the last survivor of Krypton, he must embrace his destiny as Superman, protecting humanity while grappling with his dual identity. This film explores his journey to reconcile his alien origins with his human upbringing, embodying truth, justice, and hope for a new generation.
+                </p>
+                <div class="meta-info">
+                    <p><strong>Release Year:</strong> 2025</p>
+                    <p><strong>Genre:</strong> Action, Sci-Fi, Adventure, Superhero</p>
+                    <p><strong>Director:</strong> James Gunn</p>
+                    <p><strong>Starring:</strong> David Corenswet, Rachel Brosnahan, Nicholas Hoult, Wendell Pierce</p>
+                    <p><strong>Runtime:</strong> 150 minutes</p>
+                    <p><strong>Rating:</strong> PG-13</p>
+                </div>
+
+                <!-- Buttons for playing movie and watching trailer -->
+                <div class="button-group">
+                    <button class="play-button" onclick="openVideoModal('https://mega.nz/embed/6p4DyYCb#_V_xb_0VRggLappvYfOb2ilJ2miM1FsvdtMGEz30qME')">
+                        PLAY MOVIE
+                    </button>
+                    <button class="play-button trailer-button" onclick="openVideoModal('https://www.youtube.com/embed/18QQWa5MEcs?si=CHYUwNBHvquaEjMe')">
+                        WATCH TRAILER
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- NEW: Suggested Movies Section -->
+    <section class="category-section">
+        <h2>Suggested Movies</h2>
+        <div class="carousel-container">
+            <div class="carousel-item" onclick="window.location.href='#'">
+                <img src="https://placehold.co/300x450/4CAF50/FFFFFF?text=Heroic%0AJourney" alt="Heroic Journey Poster">
+                <div class="overlay">
+                    <h3>Heroic Journey</h3>
+                    <p>2024 | Action, Adventure</p>
+                </div>
+            </div>
+
+            <div class="carousel-item" onclick="window.location.href='#'">
+                <img src="https://placehold.co/300x450/2196F3/FFFFFF?text=Cosmic%0AClash" alt="Cosmic Clash Poster">
+                <div class="overlay">
+                    <h3>Cosmic Clash</h3>
+                    <p>2023 | Sci-Fi, Action</p>
+                </div>
+            </div>
+
+            <div class="carousel-item" onclick="window.location.href='#'">
+                <img src="https://placehold.co/300x450/FFC107/333333?text=The%0AProtector" alt="The Protector Poster">
+                <div class="overlay">
+                    <h3>The Protector</h3>
+                    <p>2022 | Thriller, Action</p>
+                </div>
+            </div>
+
+            <div class="carousel-item" onclick="window.location.href='#'">
+                <img src="https://placehold.co/300x450/9C27B0/FFFFFF?text=Vigilante%0AReturns" alt="Vigilante Returns Poster">
+                <div class="overlay">
+                    <h3>Vigilante Returns</h3>
+                    <p>2024 | Action, Crime</p>
+                </div>
+            </div>
+
+            <div class="carousel-item" onclick="window.location.href='#'">
+                <img src="https://placehold.co/300x450/FF5722/FFFFFF?text=Alien%0AInvasion" alt="Alien Invasion Poster">
+                <div class="overlay">
+                    <h3>Alien Invasion</h3>
+                    <p>2025 | Sci-Fi, Disaster</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER - Consistent across all pages -->
+    <footer>
+        <p>&copy; 2025 Linkflix. All rights reserved. Designed for optimal streaming via Google Drive.</p>
+    </footer>
+
+    <!-- Custom Modal Structure (general purpose) - Consistent across all pages -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" onclick="hideModal()">&times;</button>
+            <h3 id="modalTitle"></h3>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+    <!-- NEW: Video Player Modal Structure -->
+    <div id="videoModal" class="video-modal-overlay">
+        <div class="video-modal-content">
+            <button class="video-modal-close-button" onclick="closeVideoModal()">&times;</button>
+            <div class="video-container">
+                <!-- Video iframe will be loaded here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JS - Consistent across all pages (excluding slider specific logic) -->
+    <script>
+        // Theme Toggling
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'light' ? 'Dark' : 'Light';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Apply saved theme on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-toggle').textContent = savedTheme === 'light' ? 'Dark' : 'Light';
+        });
+
+        // Hamburger Navigation for Mobile
+        function toggleNav() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            nav.classList.toggle('active');
+            hamburger.innerHTML = nav.classList.contains('active') ? '&times;' : '&#9776;'; // Change icon
+        }
+
+        function closeNav() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            if (nav.classList.contains('active')) {
+                nav.classList.remove('active');
+                hamburger.innerHTML = '&#9776;';
+            }
+        }
+
+        // Custom Modal Functions (for general messages)
+        function showModal(title, message) {
+            const modalOverlay = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is active
+        }
+
+        function hideModal() {
+            const modalOverlay = document.getElementById('customModal');
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        // Search Content Function (uses custom modal)
+        function searchContent() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                showModal('Search Initiated', `Searching for "${query}"... Please note: This is a demo; actual search functionality would integrate with a backend.`);
+            } else {
+                showModal('Search Empty', 'Please enter a search term to begin your search.');
+            }
+        }
+
+        // Functions for the Video Player Modal
+        function openVideoModal(videoSrc) {
+            const videoModalOverlay = document.getElementById('videoModal');
+            const videoContainer = videoModalOverlay.querySelector('.video-container');
+
+            // Clear any existing iframe to prevent multiple videos
+            videoContainer.innerHTML = '';
+
+            // Create new iframe
+            const iframe = document.createElement('iframe');
+            iframe.setAttribute('src', videoSrc);
+            iframe.setAttribute('allowfullscreen', '');
+            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'); // Added for YouTube
+            iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin'); // Added for YouTube
+            iframe.setAttribute('frameborder', '0'); // Explicitly set frameborder
+            iframe.setAttribute('title', 'YouTube video player'); // Added for YouTube
+
+            // Append iframe to the container
+            videoContainer.appendChild(iframe);
+
+            videoModalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+
+        function closeVideoModal() {
+            const videoModalOverlay = document.getElementById('videoModal');
+            const videoContainer = videoModalOverlay.querySelector('.video-container');
+
+            // Stop the video by removing the iframe
+            videoContainer.innerHTML = '';
+
+            videoModalOverlay.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+
+        // Listen for clicks outside the mobile nav to close it
+        document.addEventListener('click', (event) => {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            if (nav.classList.contains('active') && !nav.contains(event.target) && !hamburger.contains(event.target)) {
+                closeNav();
+            }
+        });
+
+        // Prevent body scroll when customModal is active
+        document.getElementById('customModal').addEventListener('transitionend', function() {
+            if (this.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Only restore overflow if videoModal is not active
+                if (!document.getElementById('videoModal').classList.contains('active')) {
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+
+        // Prevent body scroll when videoModal is active
+        document.getElementById('videoModal').addEventListener('transitionend', function() {
+            if (this.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Only restore overflow if customModal is not active
+                if (!document.getElementById('customModal').classList.contains('active')) {
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

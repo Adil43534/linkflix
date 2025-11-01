@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linkflix - Series Detail</title>
+    <style>
+        /* CSS Variables for Theming - Consistent across all pages */
+        :root {
+            --background-color: #141414;
+            --text-color: #fff;
+            --header-bg: rgba(20, 20, 20, 0.6);
+            --card-bg: #333;
+            --overlay-bg: rgba(0, 0, 0, 0.7);
+            --footer-bg: #000;
+            --scrollbar-thumb: #e50914;
+            --search-bg: rgba(34, 34, 34, 0.4);
+            --search-text: #fff;
+            --search-border: rgba(255, 255, 255, 0.3);
+            --search-focus: #e50914;
+            --modal-bg: rgba(0, 0, 0, 0.8);
+            --modal-content-bg: #1e1e1e;
+            --button-primary: #e50914;
+            --input-bg: rgba(255, 255, 255, 0.1); /* Added for select elements */
+            --input-border: rgba(255, 255, 255, 0.2); /* Added for select elements */
+        }
+
+        [data-theme="light"] {
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --card-bg: #e0e0e0;
+            --overlay-bg: rgba(255, 255, 255, 0.8);
+            --footer-bg: #222;
+            --scrollbar-thumb: #b20710;
+            --search-bg: rgba(255, 255, 255, 0.4);
+            --search-text: #333;
+            --search-border: rgba(0, 0, 0, 0.2);
+            --search-focus: #b20710;
+            --modal-bg: rgba(255, 255, 255, 0.8);
+            --modal-content-bg: #fefefe;
+            --button-primary: #b20710;
+            --input-bg: rgba(0, 0, 0, 0.05); /* Added for select elements */
+            --input-border: rgba(0, 0, 0, 0.1); /* Added for select elements */
+        }
+
+        /* Base Styles - Consistent across all pages */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+            padding-top: 80px; /* Offset for fixed header */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbar Styles - Consistent across all pages */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+        body::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+
+        /* Header Styles (Glass Effect) - Consistent across all pages */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--header-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-weight: bold;
+            color: #e50914;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease-in-out;
+        }
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            position: relative;
+            padding: 0.2rem 0;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #e50914;
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Search Bar (Glass Effect) - Consistent across all pages */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: var(--search-bg);
+            border-radius: 25px;
+            padding: 0.3rem 0.5rem;
+            border: 1px solid var(--search-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .search-bar:hover,
+        .search-bar:focus-within {
+            border-color: var(--search-focus);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+        }
+
+        .search-bar input {
+            background: transparent;
+            color: var(--search-text);
+            border: none;
+            padding: 0.6rem 1rem;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            width: clamp(120px, 25vw, 180px);
+            outline: none;
+            transition: width 0.3s ease, padding 0.3s ease;
+        }
+
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        [data-theme="light"] .search-bar input::placeholder {
+            color: rgba(51, 51, 51, 0.7);
+        }
+
+        .search-bar input:focus {
+            width: clamp(150px, 35vw, 250px);
+            padding-left: 1.2rem;
+            padding-right: 1.2rem;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, border-color 0.3s, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .theme-toggle:hover {
+            background: #e50914;
+            color: #fff;
+            border-color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            cursor: pointer;
+            z-index: 1001;
+            transition: transform 0.3s ease;
+        }
+        .hamburger:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Navigation Overlay - Consistent across all pages */
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+                flex-direction: column;
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 70%;
+                height: 100vh;
+                background: var(--header-bg);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 6rem 2rem 2rem;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+                transition: transform 0.3s ease-in-out;
+                transform: translateX(100%);
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            nav.active {
+                transform: translateX(0);
+                display: flex;
+            }
+
+            nav a, .search-bar, .theme-toggle {
+                width: 100%;
+                margin: 0;
+                text-align: left;
+                padding: 0.8rem 0;
+            }
+            nav a::after { left: 0; }
+
+            .search-bar input {
+                width: 100%;
+                padding: 0.8rem 1rem;
+            }
+            .search-bar input:focus {
+                width: 100%;
+            }
+
+            .hamburger {
+                display: block;
+            }
+        }
+
+        /* Movie Detail Page Specific Styles (Adapted for Series) */
+        .detail-hero {
+            position: relative;
+            width: 100%;
+            min-height: 85vh; /* Increased height for a grander feel */
+            background-image: url('https://placehold.co/1920x1080/4F5F6F/FFFFFF?text=Epic+Series+Background'); /* Generic series background */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #fff;
+            overflow: hidden;
+            padding-top: 80px; /* Ensure content starts below the header */
+            padding-bottom: 2rem; /* Add some padding at the bottom for content below */
+        }
+
+        .detail-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.8) 100%); /* Stronger gradient overlay */
+            backdrop-filter: blur(8px); /* More pronounced blur */
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 0;
+        }
+
+        .content-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column; /* Stack vertically on small screens */
+            align-items: center;
+            max-width: 1400px; /* Wider content area */
+            margin: 0 auto;
+            padding: clamp(1.5rem, 5vw, 3rem); /* Increased padding */
+            gap: 2.5rem; /* More space between poster and text */
+            background: rgba(0,0,0,0.3); /* Subtle backdrop for content container */
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5); /* Stronger shadow */
+        }
+
+        .series-poster {
+            width: clamp(250px, 35vw, 350px); /* Larger, more prominent poster */
+            height: auto;
+            aspect-ratio: 2/3; /* Standard poster aspect ratio */
+            border-radius: 15px; /* More rounded */
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6); /* Even stronger shadow */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 3px solid rgba(229, 9, 20, 0.7); /* Subtle red border */
+        }
+
+        .series-poster:hover {
+            transform: scale(1.03) translateY(-5px); /* Lift and grow slightly more */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        }
+
+        .series-details-text {
+            text-align: center;
+            max-width: 800px; /* Wider text content */
+        }
+
+        .series-details-text h1 {
+            font-size: clamp(3rem, 7vw, 5rem); /* Larger, more impactful title */
+            margin-bottom: 1.2rem;
+            color: #e50914; /* Linkflix red for the title */
+            text-shadow: 3px 3px 8px rgba(0,0,0,0.9); /* More pronounced shadow */
+            font-weight: 700; /* Bolder font */
+        }
+
+        .series-details-text .tagline {
+            font-size: clamp(1.1rem, 3vw, 1.8rem); /* New tagline style */
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            color: #f0f0f0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+        }
+
+        .series-details-text .synopsis {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            margin-bottom: 1.8rem;
+            color: #ddd;
+            text-align: justify; /* Justify text for a cleaner block */
+        }
+
+        .series-details-text .meta-info {
+            font-size: clamp(0.9rem, 2.2vw, 1.1rem);
+            color: #bbb;
+            margin-top: 1.5rem;
+            line-height: 1.8;
+            background: rgba(255,255,255,0.05); /* Light background for metadata */
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            display: inline-block; /* Helps with centering if content is small */
+            text-align: left; /* Ensure text is left-aligned within its block */
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        }
+        .series-details-text .meta-info p strong {
+            color: #e50914; /* Highlight strong tags */
+        }
+
+        /* Styling for Season and Episode dropdowns */
+        .season-episode-selector {
+            display: flex;
+            flex-direction: column; /* Stack on mobile */
+            gap: 1.5rem;
+            margin-top: 2rem;
+            width: 100%; /* Take full width of parent */
+            max-width: 400px; /* Limit width */
+        }
+
+        @media (min-width: 600px) {
+            .season-episode-selector {
+                flex-direction: row; /* Side-by-side on larger screens */
+                justify-content: center;
+                gap: 2rem;
+            }
+        }
+
+        .season-episode-selector .form-group {
+            flex: 1; /* Distribute space evenly */
+            margin-bottom: 0; /* Override default form-group margin */
+            text-align: left; /* Align labels */
+        }
+
+        .season-episode-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: clamp(0.9rem, 2.2vw, 1rem);
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .season-episode-selector select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            outline: none;
+            cursor: pointer;
+            appearance: none; /* Remove default dropdown arrow */
+            -webkit-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M208.56,96.44l-80,80a8,8,0,0,1-11.31,0l-80-80a8,8,0,0,1,11.31-11.31L128,165.37l74.12-74.12A8,8,0,0,1,208.56,96.44Z%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E'); /* Custom arrow */
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2em;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        [data-theme="light"] .season-episode-selector select {
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%3Cpath%20fill%3D%22%23333333%22%20d%3D%22M208.56,96.44l-80,80a8,8,0,0,1-11.31,0l-80-80a8,8,0,0,1,11.31-11.31L128,165.37l74.12-74.12A8,8,0,0,1,208.56,96.44Z%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E');
+        }
+
+        .season-episode-selector select:focus {
+            border-color: var(--button-primary);
+            box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.3);
+        }
+
+        .cta-button {
+            background: var(--button-primary);
+            color: #fff;
+            padding: 1.2rem 2.5rem; /* Larger button */
+            border: none;
+            border-radius: 10px; /* More rounded */
+            font-size: clamp(1.1rem, 3vw, 1.5rem); /* Larger font */
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.4); /* Stronger button shadow */
+            margin-top: 3rem; /* More space above button */
+            text-transform: uppercase; /* Uppercase text */
+            font-weight: bold;
+        }
+
+        .cta-button:hover {
+            background: #b20710;
+            transform: translateY(-5px) scale(1.02); /* More pronounced hover effect */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+        .cta-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Responsive adjustments for series details */
+        @media (min-width: 768px) {
+            .content-container {
+                flex-direction: row; /* Row layout on larger screens */
+                text-align: left;
+                align-items: flex-start;
+                padding: clamp(2rem, 6vw, 4rem); /* Adjust padding for larger screens */
+            }
+
+            .series-poster {
+                margin-right: 3rem; /* More space between poster and text */
+            }
+
+            .series-details-text {
+                text-align: left;
+            }
+        }
+
+        /* Footer - Consistent across all pages */
+        footer {
+            background: var(--footer-bg);
+            padding: clamp(1rem, 4vw, 2rem) 5%;
+            text-align: center;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            color: #aaa;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: auto;
+            border-radius: 15px 15px 0 0;
+        }
+
+        /* Custom Modal Styles - Consistent across all pages */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--modal-content-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .modal-close-button:hover {
+            color: #e50914;
+        }
+
+        .modal-content h3 {
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            margin-bottom: 1rem;
+            color: #e50914;
+        }
+
+        .modal-content p {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            margin-bottom: 1.5rem;
+        }
+    </style>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- HEADER - Consistent across all pages -->
+    <header>
+        <div class="logo">Linkflix</div>
+        <button class="hamburger" aria-label="Toggle navigation" onclick="toggleNav()">&#9776;</button>
+        <nav id="mainNav">
+            <a href="index.html" onclick="closeNav()">Home</a>
+            <a href="movies.html" onclick="closeNav()">Movies</a>
+            <a href="series.html" onclick="closeNav()">Series</a>
+            <a href="account.html" onclick="closeNav()">Account</a>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search movies or series..." onkeydown="if(event.key === 'Enter') searchContent()">
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">Dark</button>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT FOR SERIES DETAIL PAGE -->
+    <main class="detail-hero">
+        <div class="content-container">
+            <img src="https://placehold.co/350x525/4F5F6F/FFFFFF?text=SERIES%0APOSTER" alt="Series Poster" class="series-poster">
+            <div class="series-details-text">
+                <h1>The Chronos Saga</h1>
+                <p class="tagline">Time is a weapon. History is written by the victors.</p>
+                <p class="synopsis">
+                    In a world where time travel is a reality but heavily regulated, a rogue agency discovers a conspiracy threatening to unravel the very fabric of history. Follow a team of elite temporal agents as they jump through different eras, battling shadowy figures and trying to preserve the timeline, or perhaps, rewrite it. Each season delves into a new historical period and a new facet of the overarching mystery.
+                </p>
+                <div class="meta-info">
+                    <p><strong>Release Year:</strong> 2023</p>
+                    <p><strong>Genre:</strong> Sci-Fi, Thriller, Historical Fiction</p>
+                    <p><strong>Creator:</strong> Ava Sharma</p>
+                    <p><strong>Starring:</strong> Liam Vance, Dr. Evelyn Reed, Kaelen Thorne</p>
+                    <p><strong>Seasons:</strong> 3</p>
+                    <p><strong>Rating:</strong> TV-MA</p>
+                </div>
+
+                <!-- NEW: Season and Episode Selectors -->
+                <div class="season-episode-selector">
+                    <div class="form-group">
+                        <label for="seasonSelect">Season:</label>
+                        <select id="seasonSelect">
+                            <option value="1">Season 1</option>
+                            <option value="2">Season 2</option>
+                            <option value="3">Season 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="episodeSelect">Episode:</label>
+                        <select id="episodeSelect">
+                            <option value="1">Episode 1</option>
+                            <option value="2">Episode 2</option>
+                            <option value="3">Episode 3</option>
+                            <option value="4">Episode 4</option>
+                            <option value="5">Episode 5</option>
+                            <option value="6">Episode 6</option>
+                            <option value="7">Episode 7</option>
+                            <option value="8">Episode 8</option>
+                            <option value="9">Episode 9</option>
+                            <option value="10">Episode 10</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="cta-button" onclick="streamSelectedEpisode()">STREAM EPISODE</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER - Consistent across all pages -->
+    <footer>
+        <p>&copy; 2025 Linkflix. All rights reserved. Designed for optimal streaming via Google Drive.</p>
+    </footer>
+
+    <!-- Custom Modal Structure - Consistent across all pages -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" onclick="hideModal()">&times;</button>
+            <h3 id="modalTitle"></h3>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+    <!-- JS - Consistent across all pages (excluding slider specific logic) -->
+    <script>
+        // Theme Toggling
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'light' ? 'Dark' : 'Light';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Apply saved theme on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-toggle').textContent = savedTheme === 'light' ? 'Dark' : 'Light';
+        });
+
+        // Hamburger Navigation for Mobile
+        function toggleNav() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            nav.classList.toggle('active');
+            hamburger.innerHTML = nav.classList.contains('active') ? '&times;' : '&#9776;'; // Change icon
+        }
+
+        function closeNav() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            if (nav.classList.contains('active')) {
+                nav.classList.remove('active');
+                hamburger.innerHTML = '&#9776;';
+            }
+        }
+
+        // Custom Modal Functions
+        function showModal(title, message) {
+            const modalOverlay = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is active
+        }
+
+        function hideModal() {
+            const modalOverlay = document.getElementById('customModal');
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        // Search Content Function (uses custom modal)
+        function searchContent() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                showModal('Search Initiated', `Searching for "${query}"... Please note: This is a demo; actual search functionality would integrate with a backend.`);
+            } else {
+                showModal('Search Empty', 'Please enter a search term to begin your search.');
+            }
+        }
+
+        // NEW: Function to handle streaming based on selected season/episode
+        function streamSelectedEpisode() {
+            const season = document.getElementById('seasonSelect').value;
+            const episode = document.getElementById('episodeSelect').value;
+            const seriesTitle = document.querySelector('.series-details-text h1').textContent; // Get the series title dynamically
+
+            // In a real application, you would construct a *real* URL
+            // based on the selected season and episode, e.g.:
+            // const streamingLink = `https://yourstreamingprovider.com/${seriesTitle.replace(/\s/g, '-').toLowerCase()}/season-${season}/episode-${episode}`;
+            const placeholderLink = `https://drive.google.com/drive/folders/YOUR_SERIES_ID_S${season}_E${episode}`;
+
+            showModal('Streaming Episode', `Now playing: ${seriesTitle} - Season ${season}, Episode ${episode}. Opening content in a new tab...`);
+            setTimeout(() => {
+                window.open(placeholderLink, '_blank');
+                hideModal();
+            }, 1500);
+        }
+
+        // Listen for clicks outside the mobile nav to close it
+        document.addEventListener('click', (event) => {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            if (nav.classList.contains('active') && !nav.contains(event.target) && !hamburger.contains(event.target)) {
+                closeNav();
+            }
+        });
+
+        // Prevent body scroll when modal is active
+        document.getElementById('customModal').addEventListener('transitionend', function() {
+            if (this.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+</body>
+</html>

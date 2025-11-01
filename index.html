@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linkflix - Stream Movies & Series</title>
+    <style>
+        /* CSS Variables for Theming */
+        :root {
+            --background-color: #141414;
+            --text-color: #fff;
+            --header-bg: rgba(20, 20, 20, 0.6); /* Slightly more opaque for glass effect */
+            --card-bg: #333;
+            --overlay-bg: rgba(0, 0, 0, 0.7);
+            --footer-bg: #000;
+            --scrollbar-thumb: #e50914;
+            --search-bg: rgba(34, 34, 34, 0.4); /* More transparent for glass effect */
+            --search-text: #fff;
+            --search-border: rgba(255, 255, 255, 0.3); /* Softer border */
+            --search-focus: #e50914;
+            --modal-bg: rgba(0, 0, 0, 0.8);
+            --modal-content-bg: #1e1e1e;
+        }
+
+        [data-theme="light"] {
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --card-bg: #e0e0e0;
+            --overlay-bg: rgba(255, 255, 255, 0.8);
+            --footer-bg: #222;
+            --scrollbar-thumb: #b20710;
+            --search-bg: rgba(255, 255, 255, 0.4);
+            --search-text: #333;
+            --search-border: rgba(0, 0, 0, 0.2);
+            --search-focus: #b20710;
+            --modal-bg: rgba(255, 255, 255, 0.8);
+            --modal-content-bg: #fefefe;
+        }
+
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif; /* Using Inter font as per instructions */
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+            padding-top: 80px; /* Offset for fixed header, ensuring content starts below it */
+        }
+
+        /* Scrollbar Styles */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+        body::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+
+        /* Header Styles (Glass Effect) */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--header-bg);
+            backdrop-filter: blur(15px); /* Increased blur for stronger glass effect */
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 0 0 15px 15px; /* Rounded bottom corners */
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+
+        .logo {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-weight: bold;
+            color: #e50914;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease-in-out;
+        }
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem; /* Increased gap */
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            position: relative;
+            padding: 0.2rem 0;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #e50914;
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Search Bar (Glass Effect) */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: var(--search-bg);
+            border-radius: 25px;
+            padding: 0.3rem 0.5rem;
+            border: 1px solid var(--search-border);
+            backdrop-filter: blur(10px); /* Specific blur for search bar */
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden; /* Ensures rounded corners apply to children */
+        }
+
+        .search-bar:hover,
+        .search-bar:focus-within { /* Added focus-within for active state */
+            border-color: var(--search-focus);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+        }
+
+        .search-bar input {
+            background: transparent;
+            color: var(--search-text);
+            border: none;
+            padding: 0.6rem 1rem;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            width: clamp(120px, 25vw, 180px);
+            outline: none;
+            transition: width 0.3s ease, padding 0.3s ease;
+        }
+
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        [data-theme="light"] .search-bar input::placeholder {
+            color: rgba(51, 51, 51, 0.7);
+        }
+
+
+        .search-bar input:focus {
+            width: clamp(150px, 35vw, 250px); /* Wider on focus */
+            padding-left: 1.2rem;
+            padding-right: 1.2rem;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px; /* Slightly more rounded */
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, border-color 0.3s, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .theme-toggle:hover {
+            background: #e50914;
+            color: #fff;
+            border-color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        .hamburger {
+            display: none; /* Hidden by default for desktop */
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            cursor: pointer;
+            z-index: 1001; /* Ensure it's above the nav when active */
+            transition: transform 0.3s ease;
+        }
+        .hamburger:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Navigation Overlay */
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+                flex-direction: column;
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 70%; /* Take up 70% of screen width */
+                height: 100vh;
+                background: var(--header-bg);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 6rem 2rem 2rem;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+                transition: transform 0.3s ease-in-out;
+                transform: translateX(100%); /* Start off-screen */
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            nav.active {
+                transform: translateX(0); /* Slide in */
+                display: flex; /* Make it visible */
+            }
+
+            nav a, .search-bar, .theme-toggle {
+                width: 100%; /* Full width in mobile nav */
+                margin: 0; /* Reset margin */
+                text-align: left;
+                padding: 0.8rem 0;
+            }
+            nav a::after { left: 0; } /* Ensure underline starts from left */
+
+            .search-bar input {
+                width: 100%; /* Full width */
+                padding: 0.8rem 1rem;
+            }
+            .search-bar input:focus {
+                width: 100%;
+            }
+
+            .hamburger {
+                display: block; /* Show hamburger on mobile */
+            }
+        }
+
+        /* Hero Section with Slider */
+        .hero {
+            height: 100vh;
+            min-height: 400px; /* Minimum height for smaller screens */
+            position: relative;
+            overflow: hidden;
+            /* REMOVED: padding-top: 80px; */ /* This was causing the extra space */
+        }
+
+        .slider {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .slide {
+            flex: 0 0 100%;
+            height: calc(100vh - 80px); /* Adjust slide height relative to header */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            padding: 2rem; /* Add some padding */
+        }
+
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65); /* Slightly darker overlay */
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            padding: 1rem;
+            max-width: 800px; /* Constrain content width */
+            margin: 0 auto;
+        }
+
+        .hero-content h1 {
+            /* Adjusted clamp values for better responsiveness */
+            font-size: clamp(2rem, 5.5vw, 4rem); /* Smaller on mobile, max 4rem */
+            margin-bottom: 1rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .hero-content p {
+            /* Adjusted clamp values for better responsiveness */
+            font-size: clamp(0.9rem, 2.5vw, 1.4rem); /* Smaller on mobile, max 1.4rem */
+            margin-bottom: 1.5rem;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+        }
+
+        .cta-button {
+            background: #e50914;
+            color: #fff;
+            padding: 1rem 2rem; /* Larger padding */
+            border: none;
+            border-radius: 8px; /* Rounded corners */
+            font-size: clamp(1rem, 2.8vw, 1.3rem);
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .cta-button:hover {
+            background: #b20710;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+        .cta-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .slider-nav {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.75rem; /* Increased gap */
+            z-index: 1;
+        }
+
+        .slider-nav button {
+            width: 10px; /* Fixed size for dots */
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            background: transparent;
+            cursor: pointer;
+            transition: background 0.3s, border-color 0.3s, transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .slider-nav button.active {
+            background: #e50914;
+            border-color: #e50914;
+            transform: scale(1.2);
+        }
+        .slider-nav button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .slider-controls {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
+            z-index: 1;
+            padding: 0 1rem;
+        }
+
+        .slider-controls button {
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            color: #fff;
+            font-size: clamp(1.2rem, 4vw, 2rem); /* Larger arrows */
+            padding: 0.8rem 0.5rem;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s ease;
+            border-radius: 5px;
+        }
+
+        .slider-controls button:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.1);
+        }
+
+        /* Content Sections */
+        .content-section {
+            padding: clamp(2rem, 8vw, 4rem) 5%; /* Responsive padding */
+        }
+
+        .content-section h2 {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            margin-bottom: 2rem;
+            text-align: center;
+            color: #e50914;
+        }
+
+        .carousel {
+            display: flex;
+            overflow-x: auto;
+            gap: 1.5rem; /* Increased gap between items */
+            padding-bottom: 1rem;
+            padding-left: 0.5rem; /* Some padding for left edge */
+            padding-right: 0.5rem; /* Some padding for right edge */
+            scroll-behavior: smooth; /* Smooth scrolling */
+        }
+
+        .carousel::-webkit-scrollbar {
+            height: 0.6rem; /* Thicker scrollbar */
+        }
+
+        .carousel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.3rem;
+        }
+
+        .carousel::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 0.3rem;
+            border: 2px solid transparent; /* Prevents background color show-through */
+            background-clip: padding-box; /* Ensures border is outside thumb color */
+        }
+        .carousel::-webkit-scrollbar-thumb:hover {
+            background: #b20710;
+        }
+
+
+        .carousel-item {
+            flex: 0 0 auto;
+            width: clamp(160px, 22vw, 220px); /* Slightly larger, responsive width */
+            height: auto; /* Allow height to adjust based on aspect ratio */
+            aspect-ratio: 2/3; /* Common poster aspect ratio */
+            background: var(--card-bg);
+            border-radius: 12px; /* More rounded corners */
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .carousel-item:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block; /* Remove extra space below image */
+        }
+
+        .carousel-item .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, var(--overlay-bg) 0%, rgba(0,0,0,0) 100%); /* Gradient overlay */
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(100%); /* Start off-screen */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 50%; /* Ensure overlay covers at least half the image */
+        }
+
+        .carousel-item:hover .overlay {
+            opacity: 1;
+            transform: translateY(0); /* Slide in */
+        }
+
+        .carousel-item .overlay h3 {
+            font-size: clamp(1rem, 2.2vw, 1.2rem);
+            margin-bottom: 0.4rem;
+            color: var(--text-color);
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+
+        .carousel-item .overlay p {
+            font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+            color: #bbb;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--footer-bg);
+            padding: clamp(1rem, 4vw, 2rem) 5%;
+            text-align: center;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            color: #aaa;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 2rem;
+            border-radius: 15px 15px 0 0; /* Rounded top corners */
+        }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--modal-content-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            max-width: 90%;
+            width: 400px; /* Fixed width for modal */
+            text-align: center;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .modal-close-button:hover {
+            color: #e50914;
+        }
+
+        .modal-content h3 {
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            margin-bottom: 1rem;
+            color: #e50914;
+        }
+
+        .modal-content p {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Ensure header doesn't obscure content */
+        /* This rule remains, as it correctly pushes content below the fixed header */
+        /* body {
+            padding-top: 80px;
+        } */
+
+        /* Make carousel items stack on very small screens if needed */
+        @media (max-width: 480px) {
+            .carousel {
+                flex-wrap: wrap; /* Allow items to wrap */
+                justify-content: center;
+            }
+            .carousel-item {
+                width: 45%; /* Two items per row with some gap */
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="logo">Linkflix</div>
+        <button class="hamburger" aria-label="Toggle navigation" onclick="toggleNav()">&#9776;</button>
+        <nav id="mainNav">
+            <a href="home.html" onclick="closeNav()">Home</a>
+            <a href="movies.html" onclick="closeNav()">Movies</a>
+            <a href="series.html" onclick="closeNav()">Series</a>
+            <a href="request.html" onclick="closeNav()">Account</a>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search movies or series..." onkeydown="if(event.key === 'Enter') searchContent()">
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">Dark</button>
+        </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+        <div class="slider">
+            <div class="slide" style="background-image: url('/movie posters/superman legacy\ banner.jpg');">
+                <div class="hero-content">
+                    <h1>Superman: Legacy</h1>
+                    <p>Experience the most thrilling action packed movie of the year, stream instantly!</p>
+                    <button class="cta-button" onclick="window.location.href='superman-legacy.html'">Stream Now</button>
+                </div>
+            </div>
+            <div class="slide" style="background-image: url('/movie posters/fantastic4-banner.jpg');">
+                <div class="hero-content">
+                    <h1>Fantastic Four: First Step</h1>
+                    <p>Dive into a world of mystery and suspense with our top-rated crime series!</p>
+                    <button class="cta-button" onclick="streamContent('https://drive.google.com/drive/folders/YOUR_CRIME_SERIES_ID')">Stream Now</button>
+                </div>
+            </div>
+            <div class="slide" style="background-image: url('/movie posters/thunderbolts-banner.jpg');">
+                <div class="hero-content">
+                    <h1>Thunderbols</h1>
+                    <p>Embark on an interstellar journey with stunning visuals and a captivating story!</p>
+                    <button class="cta-button" onclick="streamContent('https://mega.nz/embed/WsZTEYjY#G-Yifw5KnSAMEgcst2mjQJ-_H1E4oVytjFsLesJfrEM')">Stream Now</button>
+                </div>
+            </div>
+        </div>
+        <div class="slider-controls">
+            <button onclick="changeSlide(-1)">&#10094;</button>
+            <button onclick="changeSlide(1)">&#10095;</button>
+        </div>
+        <div class="slider-nav"></div>
+    </section>
+
+    <!-- MOVIES -->
+    <section class="content-section" id="movies">
+        <h2>Featured Movies</h2>
+        <div class="carousel">
+            <!-- Example Movie Items -->
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/ACTION_1_ID')">
+                <img src="https://placehold.co/300x450/e50914/FFFFFF?text=Action+Movie+1" alt="Action Movie">
+                <div class="overlay">
+                    <h3>The Vigilante's Rise</h3>
+                    <p>2024 | Action, Thriller</p>
+                </div>
+            </div>
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/COMEDY_1_ID')">
+                <img src="https://placehold.co/300x450/00A86B/FFFFFF?text=Comedy+Film+2" alt="Comedy Film">
+                <div class="overlay">
+                    <h3>Laugh Out Loud</h3>
+                    <p>2023 | Comedy</p>
+                </div>
+            </div>
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/DRAMA_1_ID')">
+                <img src="https://placehold.co/300x450/4A90E2/FFFFFF?text=Drama+Masterpiece+3" alt="Drama Masterpiece">
+                <div class="overlay">
+                    <h3>Echoes of Tomorrow</h3>
+                    <p>2024 | Drama</p>
+                </div>
+            </div>
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/SCIFI_1_ID')">
+                <img src="https://placehold.co/300x450/8A2BE2/FFFFFF?text=Sci-Fi+Epic+4" alt="Sci-Fi Epic">
+                <div class="overlay">
+                    <h3>Beyond the Horizon</h3>
+                    <p>2025 | Sci-Fi, Adventure</p>
+                </div>
+            </div>
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/HORROR_1_ID')">
+                <img src="https://placehold.co/300x450/8B0000/FFFFFF?text=Horror+Thriller+5" alt="Horror Thriller">
+                <div class="overlay">
+                    <h3>The Silent Forest</h3>
+                    <p>2023 | Horror, Mystery</p>
+                </div>
+            </div>
+             <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/FANTASY_1_ID')">
+                <img src="https://placehold.co/300x450/FFD700/000000?text=Fantasy+Adventure+6" alt="Fantasy Adventure">
+                <div class="overlay">
+                    <h3>Realm of Enchantment</h3>
+                    <p>2024 | Fantasy, Adventure</p>
+                </div>
+            </div>
+             <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/ANIMATION_1_ID')">
+                <img src="https://placehold.co/300x450/FF6347/FFFFFF?text=Animated+Hit+7" alt="Animated Hit">
+                <div class="overlay">
+                    <h3>The Quest for Sparkle</h3>
+                    <p>2023 | Animation, Family</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERIES -->
+    <section class="content-section" id="series">
+        <h2>Popular Series</h2>
+        <div class="carousel">
+            <!-- Example Series Items -->
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/CRIME_SERIES_1_ID')">
+                <img src="https://placehold.co/300x450/1E90FF/FFFFFF?text=Crime+Series+1" alt="Crime Series">
+                <div class="overlay">
+                    <h3>City Under Siege</h3>
+                    <p>3 Seasons | Crime, Drama</p>
+                </div>
+            </div>
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/FANTASY_SERIES_1_ID')">
+                <img src="https://placehold.co/300x450/FF1493/FFFFFF?text=Fantasy+Series+2" alt="Fantasy Series">
+                <div class="overlay">
+                    <h3>Chronicles of Eldoria</h3>
+                    <p>2 Seasons | Fantasy, Action</p>
+                </div>
+            </div>
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/COMEDY_SERIES_1_ID')">
+                <img src="https://placehold.co/300x450/32CD32/FFFFFF?text=Comedy+Series+3" alt="Comedy Series">
+                <div class="overlay">
+                    <h3>The Office Shenanigans</h3>
+                    <p>5 Seasons | Comedy</p>
+                </div>
+            </div>
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/HISTORICAL_SERIES_1_ID')">
+                <img src="https://placehold.co/300x450/8B4513/FFFFFF?text=Historical+Drama+4" alt="Historical Drama">
+                <div class="overlay">
+                    <h3>Queens of the Nile</h3>
+                    <p>1 Season | Historical, Drama</p>
+                </div>
+            </div>
+            <div class="carousel-item" onclick="streamContent('https://drive.google.com/drive/folders/DOCUMENTARY_SERIES_1_ID')">
+                <img src="https://placehold.co/300x450/6A5ACD/FFFFFF?text=Docuseries+5" alt="Docuseries">
+                <div class="overlay">
+                    <h3>Planet Earth Unveiled</h3>
+                    <p>4 Seasons | Documentary</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2025 Linkflix. All rights reserved. Designed for optimal streaming via Google Drive.</p>
+    </footer>
+
+    <!-- Custom Modal Structure -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" onclick="hideModal()">&times;</button>
+            <h3 id="modalTitle"></h3>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script>
+        // Theme Toggling
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'light' ? 'Dark' : 'Light';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Apply saved theme on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-toggle').textContent = savedTheme === 'light' ? 'Dark' : 'Light';
+            initSlider(); // Initialize slider after DOM is ready
+        });
+
+        // Hamburger Navigation for Mobile
+        function toggleNav() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            nav.classList.toggle('active');
+            hamburger.innerHTML = nav.classList.contains('active') ? '&times;' : '&#9776;'; // Change icon
+        }
+
+        function closeNav() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            if (nav.classList.contains('active')) {
+                nav.classList.remove('active');
+                hamburger.innerHTML = '&#9776;';
+            }
+        }
+
+        // Custom Modal Functions
+        function showModal(title, message) {
+            const modalOverlay = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalOverlay.classList.add('active');
+        }
+
+        function hideModal() {
+            const modalOverlay = document.getElementById('customModal');
+            modalOverlay.classList.remove('active');
+        }
+
+        // Search Content Function (uses custom modal)
+        function searchContent() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                showModal('Search Initiated', `Searching for "${query}"... Please note: This is a demo; actual search functionality would integrate with a backend.`);
+            } else {
+                showModal('Search Empty', 'Please enter a search term to begin your search.');
+            }
+        }
+
+        // Stream Content Function (opens new tab)
+        function streamContent(link) {
+            // In a real application, you might show a loading spinner or confirmation
+            // before redirecting, or embed a player directly.
+            showModal('Streaming Content', 'Opening content in a new tab... Enjoy!');
+            setTimeout(() => {
+                window.open(link, '_blank');
+                hideModal(); // Hide modal after opening link
+            }, 1500); // Give user a moment to read the message
+        }
+
+        // Hero Slider Logic
+        let slideIndex = 0;
+        let slides = [];
+        let dots = [];
+        let sliderInterval; // Variable to hold the interval
+
+        function initSlider() {
+            slides = document.querySelectorAll('.hero .slide');
+            const sliderNav = document.querySelector('.slider-nav');
+            sliderNav.innerHTML = ''; // Clear existing dots
+
+            for (let i = 0; i < slides.length; i++) {
+                const dot = document.createElement('button');
+                dot.setAttribute('data-index', i);
+                dot.onclick = () => currentSlide(i);
+                sliderNav.appendChild(dot);
+                dots.push(dot);
+            }
+            showSlides(slideIndex);
+            startSliderAutoPlay();
+        }
+
+        function showSlides(n) {
+            if (n >= slides.length) { slideIndex = 0; }
+            if (n < 0) { slideIndex = slides.length - 1; }
+
+            const slider = document.querySelector('.slider');
+            slider.style.transform = `translateX(${-slideIndex * 100}%)`;
+
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === slideIndex);
+            });
+        }
+
+        function changeSlide(n) {
+            stopSliderAutoPlay(); // Stop auto-play when user interacts
+            slideIndex += n;
+            showSlides(slideIndex);
+            startSliderAutoPlay(); // Restart auto-play
+        }
+
+        function currentSlide(n) {
+            stopSliderAutoPlay(); // Stop auto-play when user interacts
+            slideIndex = n;
+            showSlides(slideIndex);
+            startSliderAutoPlay(); // Restart auto-play
+        }
+
+        function startSliderAutoPlay() {
+            clearInterval(sliderInterval); // Clear any existing interval
+            sliderInterval = setInterval(() => {
+                slideIndex++;
+                showSlides(slideIndex);
+            }, 5000); // Change slide every 5 seconds
+        }
+
+        function stopSliderAutoPlay() {
+            clearInterval(sliderInterval);
+        }
+
+        // Listen for clicks outside the mobile nav to close it
+        document.addEventListener('click', (event) => {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.querySelector('.hamburger');
+            // Check if the click is outside the nav and not on the hamburger
+            if (nav.classList.contains('active') && !nav.contains(event.target) && !hamburger.contains(event.target)) {
+                closeNav();
+            }
+        });
+
+        // Prevent body scroll when modal is active
+        document.getElementById('customModal').addEventListener('transitionend', function() {
+            if (this.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        });
+
+    </script>
+</body>
+</html>
